@@ -3,6 +3,7 @@
 import json
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Optional
 
 
 @dataclass
@@ -15,10 +16,10 @@ class Config:
     show_path: bool = True
     theme: str = "dark"
     font_size: int = 12
-    hotkey: str | None = None
+    hotkey: Optional[str] = None
 
     @classmethod
-    def load(cls, path: Path | None = None) -> "Config":
+    def load(cls, path: Optional[Path] = None) -> "Config":
         """Load configuration from file.
 
         Args:
@@ -40,7 +41,7 @@ class Config:
         except (json.JSONDecodeError, TypeError):
             return cls()
 
-    def save(self, path: Path | None = None) -> None:
+    def save(self, path: Optional[Path] = None) -> None:
         """Save configuration to file.
 
         Args:
@@ -61,8 +62,8 @@ class TabInfo:
     tab_id: str
     window_id: str
     title: str
-    path: str | None = None
-    session_id: str | None = None
+    path: Optional[str] = None
+    session_id: Optional[str] = None
     window_number: int = 0
 
     def __str__(self) -> str:

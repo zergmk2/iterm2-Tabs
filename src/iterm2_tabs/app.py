@@ -10,7 +10,7 @@ from iterm2_tabs.iterm2_connection import ITerm2Connection, create_connection
 class TabSwitcher:
     """Main application class for the iTerm2 tab switcher."""
 
-    def __init__(self, config: Config | None = None) -> None:
+    def __init__(self, config: Optional[Config] = None) -> None:
         """Initialize the tab switcher.
 
         Args:

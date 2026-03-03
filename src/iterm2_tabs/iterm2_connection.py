@@ -1,6 +1,6 @@
 """iTerm2 connection and tab retrieval."""
 
-from typing import Any
+from typing import Any, Optional
 
 import iterm2
 
@@ -45,7 +45,7 @@ class ITerm2Connection:
 
         return tabs_info
 
-    async def _get_session_path(self, session: iterm2.Session) -> str | None:
+    async def _get_session_path(self, session: iterm2.Session) -> Optional[str]:
         """Get the current working directory of a session.
 
         Args:

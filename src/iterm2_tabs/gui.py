@@ -2,7 +2,7 @@
 
 import tkinter as tk
 from tkinter import ttk
-from typing import Any
+from typing import Any, Optional
 
 from iterm2_tabs.config import Config, TabInfo
 
@@ -228,7 +228,7 @@ class TabSwitcherWindow:
             self.tab_list.selection_set(items[new_index])
             self.tab_list.see(items[new_index])
 
-    def _select_current(self, event: tk.Event | None = None) -> None:
+    def _select_current(self, event: Optional[tk.Event] = None) -> None:
         """Select the currently highlighted tab."""
         items = self.tab_list.get_children()
         if items and 0 <= self.selected_index < len(items):
