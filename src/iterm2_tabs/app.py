@@ -110,11 +110,12 @@ def main() -> None:
 
         # Focus the selected tab after GUI closes
         if selected_tab:
-            iterm2.run_until_complete(
-                lambda conn: create_connection(conn).focus_tab(
-                    selected_tab.tab_id, selected_tab.window_id
-                )
-            )
+
+            async def focus_selected(connection: iterm2.connection.Connection) -> None:
+                iterm2_conn = await create_connection(connection)
+                await iterm2_conn.focus_tab(selected_tab.tab_id, selected_tab.window_id)
+
+            iterm2.run_until_complete(focus_selected)
 
 
 async def focus_tab(tab_id: str, window_id: str) -> None:
