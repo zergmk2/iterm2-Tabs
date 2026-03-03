@@ -1,11 +1,14 @@
 """GUI implementation using Tkinter."""
 
 import contextlib
+import logging
 import tkinter as tk
 from tkinter import ttk
 from typing import Any, Optional
 
 from iterm2_tabs.config import Config, TabInfo
+
+logger = logging.getLogger(__name__)
 
 
 class TabSwitcherWindow:
@@ -19,6 +22,7 @@ class TabSwitcherWindow:
             config: Application configuration
             on_select: Callback function when a tab is selected
         """
+        logger.info(f"Initializing TabSwitcherWindow with {len(tabs)} tabs")
         self.tabs = tabs
         self.config = config
         self.on_select = on_select
@@ -29,6 +33,7 @@ class TabSwitcherWindow:
         self._setup_widgets()
         self._bind_events()
         self._update_list()
+        logger.info("TabSwitcherWindow initialization complete")
 
     def _setup_window(self) -> None:
         """Set up the main window properties."""
@@ -240,6 +245,7 @@ class TabSwitcherWindow:
 
     def _update_list(self) -> None:
         """Update the tab list based on current filter."""
+        logger.info(f"Updating tab list with {len(self.tabs)} tabs, filter='{self.filter_text}'")
         self.tab_list.delete(*self.tab_list.get_children())
 
         filtered_tabs = [
@@ -250,14 +256,19 @@ class TabSwitcherWindow:
             or (tab.path and self.filter_text in tab.path.lower())
         ]
 
+        logger.info(f"Filtered to {len(filtered_tabs)} tabs")
         for tab in filtered_tabs:
             self.tab_list.insert("", "end", text=str(tab), tags=(tab.tab_id,))
+            logger.debug(f"  Added: {tab.title}")
 
         # Select first item if available
         items = self.tab_list.get_children()
         if items:
             self.selected_index = 0
             self.tab_list.selection_set(items[0])
+            logger.info(f"Selected first tab: {self.tabs[0].title}")
+        else:
+            logger.warning("No items to display in tab list")
 
     def run(self) -> None:
         """Run the main window loop."""

@@ -1,11 +1,20 @@
 """Main application logic."""
 
+import logging
 import sys
 from typing import Optional
 
 from iterm2_tabs.config import Config, TabInfo
 from iterm2_tabs.gui import TabSwitcherWindow
 from iterm2_tabs.iterm2_connection import ITerm2Connection, create_connection
+
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format="[%(levelname)s] %(name)s: %(message)s",
+    stream=sys.stderr,
+)
+logger = logging.getLogger(__name__)
 
 
 class TabSwitcher:
@@ -30,8 +39,12 @@ class TabSwitcher:
         Returns:
             List of TabInfo objects
         """
+        logger.info("Starting to collect tabs from iTerm2...")
         tabs_data = await connection.get_all_tabs()
-        return [self._create_tab_info(data) for data in tabs_data]
+        logger.info(f"Collected {len(tabs_data)} tabs from connection")
+        tabs = [self._create_tab_info(data) for data in tabs_data]
+        logger.info(f"Created {len(tabs)} TabInfo objects")
+        return tabs
 
     def run(self, tabs: list[TabInfo]) -> Optional[TabInfo]:
         """Run the GUI with the collected tabs.
@@ -42,11 +55,15 @@ class TabSwitcher:
         Returns:
             The selected tab, or None if no tab was selected
         """
+        logger.info(f"Running GUI with {len(tabs)} tabs")
         if not tabs:
+            logger.warning("No tabs found in iTerm2.")
             print("No tabs found in iTerm2.")
             return None
 
         self.tabs = tabs
+        for i, tab in enumerate(tabs):
+            logger.info(f"  Tab {i + 1}: {tab.title}")
         self._run_gui()
         return self.selected_tab
 
@@ -93,8 +110,14 @@ def main() -> None:
     """Entry point for the application."""
     import iterm2
 
+    logger.info("=" * 60)
+    logger.info("Starting iTerm2 Tabs application")
+    logger.info("=" * 60)
+
     async def main_loop(connection: iterm2.connection.Connection) -> None:
+        logger.info("Creating iTerm2 connection...")
         iterm2_conn = await create_connection(connection)
+        logger.info("Connection established successfully")
         switcher = TabSwitcher()
         tabs = await switcher.collect_tabs(iterm2_conn)
 
@@ -103,24 +126,33 @@ def main() -> None:
 
     # Run the async connection to collect tabs
     try:
+        logger.info("Connecting to iTerm2...")
         tabs = iterm2.run_until_complete(main_loop)
+        logger.info(f"Connection successful, got {len(tabs) if tabs else 0} tabs")
     except Exception as e:
+        logger.error(f"Error connecting to iTerm2: {e}", exc_info=True)
         print(f"Error connecting to iTerm2: {e}", file=sys.stderr)
         sys.exit(1)
 
     # Now run the GUI with the collected tabs
     if tabs:
+        logger.info(f"Launching GUI with {len(tabs)} tabs...")
         switcher = TabSwitcher()
         selected_tab = switcher.run(tabs)
 
         # Focus the selected tab after GUI closes
         if selected_tab:
+            logger.info(f"User selected tab: {selected_tab.title}")
 
             async def focus_selected(connection: iterm2.connection.Connection) -> None:
                 iterm2_conn = await create_connection(connection)
                 await iterm2_conn.focus_tab(selected_tab.tab_id, selected_tab.window_id)
 
+            logger.info("Focusing selected tab...")
             iterm2.run_until_complete(focus_selected)
+    else:
+        logger.warning("No tabs to display")
+        print("No tabs found in iTerm2.")
 
 
 async def focus_tab(tab_id: str, window_id: str) -> None:

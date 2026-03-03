@@ -1,8 +1,12 @@
 """iTerm2 connection and tab retrieval."""
 
+import logging
 from typing import Any, Optional
 
 import iterm2
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 
 class ITerm2Connection:
@@ -25,24 +29,28 @@ class ITerm2Connection:
             List of tab information dictionaries
         """
         tabs_info = []
+        logger.info(f"Getting tabs from {len(self.app.windows)} window(s)")
 
         for window_idx, window in enumerate(self.app.windows, start=1):
+            logger.info(f"Window {window_idx}: {len(window.tabs)} tab(s)")
             for tab in window.tabs:
+                logger.info(f"  Tab {tab.tab_id}: {len(tab.sessions)} session(s)")
                 for session in tab.sessions:
                     title = await session.async_get_variable("name")
                     path = await self._get_session_path(session)
 
-                    tabs_info.append(
-                        {
-                            "tab_id": str(tab.tab_id),
-                            "window_id": str(window.window_id),
-                            "session_id": str(session.session_id),
-                            "title": title,
-                            "path": path,
-                            "window_number": window_idx,
-                        }
-                    )
+                    tab_info = {
+                        "tab_id": str(tab.tab_id),
+                        "window_id": str(window.window_id),
+                        "session_id": str(session.session_id),
+                        "title": title,
+                        "path": path,
+                        "window_number": window_idx,
+                    }
+                    logger.info(f"    Found tab: {title}")
+                    tabs_info.append(tab_info)
 
+        logger.info(f"Total tabs collected: {len(tabs_info)}")
         return tabs_info
 
     async def _get_session_path(self, session: iterm2.Session) -> Optional[str]:
