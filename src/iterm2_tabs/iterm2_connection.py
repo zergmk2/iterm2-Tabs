@@ -72,7 +72,7 @@ class ITerm2Connection:
                 await window.async_activate()
                 for tab in window.tabs:
                     if str(tab.tab_id) == tab_id:
-                        await tab.async_activate()
+                        await tab.async_select()
                         return
 
 

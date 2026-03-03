@@ -55,22 +55,15 @@ class TabSwitcher:
     def _on_tab_selected(self, tab_id: str) -> None:
         """Handle tab selection.
 
-        Note: Tab focusing requires a new iTerm2 connection.
-        This will be handled in a separate invocation.
-
         Args:
             tab_id: ID of the selected tab
         """
-        # For now, just print the tab info
-        # TODO: Implement tab focusing via a separate mechanism
         tab = next((t for t in self.tabs if t.tab_id == tab_id), None)
         if tab:
-            print(f"Selected tab: {tab.title}")
-            print(f"Tab ID: {tab.tab_id}, Window ID: {tab.window_id}")
-            print("\nNote: To enable tab focusing, set up a hotkey in iTerm2 that launches:")
-            print(
-                f'  python -c \'import iterm2_tabs; iterm2_tabs.focus_tab("{tab.tab_id}", "{tab.window_id}")\''
-            )
+            # Focus the selected tab using iTerm2 API
+            import asyncio
+
+            asyncio.run(focus_tab(tab.tab_id, tab.window_id))
 
     @staticmethod
     def _create_tab_info(data: dict) -> TabInfo:
