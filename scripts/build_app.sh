@@ -11,6 +11,16 @@ CONTENTS_DIR="${APP_DIR}/Contents"
 MACOS_DIR="${CONTENTS_DIR}/MacOS"
 RESOURCES_DIR="${CONTENTS_DIR}/Resources"
 
+# Use system Python for the app (works on all macOS systems)
+SYSTEM_PYTHON="/usr/bin/python3"
+
+# Check if system Python exists
+if [ ! -f "$SYSTEM_PYTHON" ]; then
+    echo "Error: System Python not found at $SYSTEM_PYTHON"
+    echo "Please install Python 3 from python.org or Homebrew"
+    exit 1
+fi
+
 # Clean previous build
 rm -rf "${APP_DIR}"
 
@@ -48,8 +58,8 @@ cat > "${CONTENTS_DIR}/Info.plist" << EOF
 </plist>
 EOF
 
-# Create the launcher script
-cat > "${MACOS_DIR}/iterm2-tabs" << 'EOF'
+# Create the launcher script with error logging
+cat > "${MACOS_DIR}/iterm2-tabs" << 'LAUNCHER_EOF'
 #!/bin/bash
 # iTerm2 Tabs Launcher
 
@@ -58,12 +68,36 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONTENTS_DIR="$(dirname "$SCRIPT_DIR")"
 RESOURCES_DIR="${CONTENTS_DIR}/Resources"
 
+# Log file for debugging
+LOG_FILE="${HOME}/Library/Logs/iterm2-tabs.log"
+mkdir -p "$(dirname "$LOG_FILE")"
+
 # Set up Python path
 export PYTHONPATH="${RESOURCES_DIR}/site-packages:${PYTHONPATH}"
 
-# Run the application
-exec python3 -m iterm2_tabs
-EOF
+# Run the application with error logging
+echo "========================================" >> "$LOG_FILE"
+echo "Starting iTerm2 Tabs at $(date)" >> "$LOG_FILE"
+echo "Resources dir: ${RESOURCES_DIR}" >> "$LOG_FILE"
+echo "System Python: /usr/bin/python3" >> "$LOG_FILE"
+
+# Check if iTerm2 is running
+if ! pgrep -x "iTerm2" > /dev/null; then
+    echo "ERROR: iTerm2 is not running!" >> "$LOG_FILE"
+    osascript -e 'display dialog "iTerm2 is not running!\n\nPlease start iTerm2 first and make sure the Python API is enabled:\n\niTerm2 > Preferences > General > Magic > Enable Python API" buttons {"OK"} default button 1 with title "iTerm2 Tabs" with icon caution' 2>/dev/null
+    exit 1
+fi
+
+# Run and log any errors
+/usr/bin/python3 -m iterm2_tabs 2>&1 | tee -a "$LOG_FILE"
+EXIT_CODE=${PIPESTATUS[0]}
+
+if [ $EXIT_CODE -ne 0 ]; then
+    echo "Error: iTerm2 Tabs failed with exit code $EXIT_CODE" >> "$LOG_FILE"
+    osascript -e 'display dialog "iTerm2 Tabs failed to start.\n\nCheck the log file for details:\n~/Library/Logs/iterm2-tabs.log\n\nCommon issues:\n• iTerm2 not running\n• Python API not enabled\n• No tabs open" buttons {"OK"} default button 1 with title "iTerm2 Tabs Error" with icon stop' 2>/dev/null
+    exit 1
+fi
+LAUNCHER_EOF
 
 # Make the launcher executable
 chmod +x "${MACOS_DIR}/iterm2-tabs"
@@ -75,11 +109,22 @@ mkdir -p "${RESOURCES_DIR}/site-packages"
 rsync -av --exclude='__pycache__' --exclude='*.pyc' \
     src/iterm2_tabs/ "${RESOURCES_DIR}/site-packages/iterm2_tabs/"
 
-# Install dependencies to Resources
-pip3 install --target="${RESOURCES_DIR}/site-packages" --no-cache iterm2
+# Install dependencies to Resources using system Python
+$SYSTEM_PYTHON -m pip install --target="${RESOURCES_DIR}/site-packages" --no-cache --upgrade iterm2 2>&1 | grep -v "already satisfied" || true
 
-# Create PTH file to ensure the package is importable
-echo "import site; site.addsitedir('${RESOURCES_DIR}/site-packages')" > "${RESOURCES_DIR}/site-packages/iterm2_tabs.pth"
+# Create __init__.py for site-packages
+touch "${RESOURCES_DIR}/site-packages/__init__.py"
 
 echo "Built ${APP_DIR}"
-echo "You can now run: open ${APP_DIR}"
+echo ""
+echo "To test:"
+echo "  ${APP_DIR}/Contents/MacOS/iterm2-tabs"
+echo ""
+echo "To install:"
+echo "  cp -R ${APP_DIR} /Applications/"
+echo ""
+echo "⚠️  IMPORTANT:"
+echo "    1. Make sure iTerm2 is running"
+echo "    2. Enable Python API: iTerm2 > Preferences > General > Magic > Enable Python API"
+echo "    3. Log file: ~/Library/Logs/iterm2-tabs.log"
+EOF

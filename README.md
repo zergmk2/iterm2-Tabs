@@ -50,7 +50,25 @@ python -m iterm2_tabs
 iterm2-tabs
 ```
 
-### iTerm2 Launcher
+### macOS App
+
+```bash
+# Build the app
+make dist
+
+# Install to Applications
+cp -R dist/iterm2-tabs.app /Applications/
+
+# Run from Spotlight
+# Press ⌘ + Space, type "iTerm2 Tabs", and press Enter
+```
+
+**⚠️ IMPORTANT:** When using the macOS app:
+1. **iTerm2 must be running** before launching the app
+2. **Python API must be enabled** in iTerm2 Preferences
+3. The app will show an error dialog if iTerm2 is not running
+
+### iTerm2 Launcher (Recommended)
 
 Create a custom hotkey in iTerm2:
 
@@ -58,7 +76,9 @@ Create a custom hotkey in iTerm2:
 2. Click `+` to add new keybinding
 3. Set your preferred keyboard shortcut (e.g., `⌘ + ⇧ + T`)
 4. Action: "Run Command..."
-5. Command: `/path/to/venv/bin/python -m iterm2_tabs`
+5. Command: `python -m iterm2_tabs` (or full path to python)
+
+This is the recommended way as it ensures iTerm2 is running when the tab switcher launches.
 
 ## Configuration
 
