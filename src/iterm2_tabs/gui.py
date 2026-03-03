@@ -264,7 +264,12 @@ class TabSwitcherWindow:
         # Ensure window is visible and on top
         self.root.deiconify()
         self.root.lift()
+        self.root.attributes("-topmost", True)  # Bring to front
         self.root.focus_force()
+        self.root.update_idletasks()
+        self.root.after(
+            100, lambda: self.root.attributes("-topmost", False)
+        )  # Remove topmost after 100ms
 
         # Process any pending events
         self.root.update_idletasks()
@@ -273,6 +278,10 @@ class TabSwitcherWindow:
         if self.root.winfo_exists():
             with contextlib.suppress(Exception):
                 self.root.grab_set()
+
+        # Activate the application (macOS specific)
+        with contextlib.suppress(Exception):
+            self.root.tk.call("::tk::mac::BringToFront", self.root._w)
 
         self.root.mainloop()
 

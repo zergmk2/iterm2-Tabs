@@ -1,5 +1,6 @@
 """Main application logic."""
 
+import sys
 from typing import Optional
 
 from iterm2_tabs.config import Config, TabInfo
@@ -101,7 +102,11 @@ def main() -> None:
         return tabs
 
     # Run the async connection to collect tabs
-    tabs = iterm2.run_until_complete(main_loop)
+    try:
+        tabs = iterm2.run_until_complete(main_loop)
+    except Exception as e:
+        print(f"Error connecting to iTerm2: {e}", file=sys.stderr)
+        sys.exit(1)
 
     # Now run the GUI with the collected tabs
     if tabs:

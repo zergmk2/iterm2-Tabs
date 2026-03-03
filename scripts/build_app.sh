@@ -50,6 +50,10 @@ cat > "${CONTENTS_DIR}/Info.plist" << EOF
     <true/>
     <key>LSUIElement</key>
     <false/>
+    <key>LSBackgroundOnly</key>
+    <false/>
+    <key>LSForegroundOnly</key>
+    <true/>
     <key>NSSupportsAutomaticTermination</key>
     <false/>
     <key>NSSupportsSuddenTermination</key>
@@ -75,11 +79,15 @@ mkdir -p "$(dirname "$LOG_FILE")"
 # Set up Python path
 export PYTHONPATH="${RESOURCES_DIR}/site-packages:${PYTHONPATH}"
 
+# Activate this application to bring it to front
+osascript -e 'tell application "System Events" to set frontmost of first process whose unix id is '"$$"'' 2>/dev/null || true
+
 # Run the application with error logging
 echo "========================================" >> "$LOG_FILE"
 echo "Starting iTerm2 Tabs at $(date)" >> "$LOG_FILE"
 echo "Resources dir: ${RESOURCES_DIR}" >> "$LOG_FILE"
 echo "System Python: /usr/bin/python3" >> "$LOG_FILE"
+echo "Process ID: $$" >> "$LOG_FILE"
 
 # Check if iTerm2 is running
 if ! ps aux | grep -q "[i]Term2"; then
@@ -89,12 +97,20 @@ if ! ps aux | grep -q "[i]Term2"; then
 fi
 
 # Run and log any errors
-/usr/bin/python3 -m iterm2_tabs 2>&1 | tee -a "$LOG_FILE"
+echo "About to start Python app..." >> "$LOG_FILE"
+/usr/bin/python3 -u -m iterm2_tabs 2>&1 | while IFS= read -r line; do
+    echo "$line" >> "$LOG_FILE"
+    echo "$line"  # Also output to console for debugging
+done
 EXIT_CODE=${PIPESTATUS[0]}
+
+echo "App exited with code: $EXIT_CODE" >> "$LOG_FILE"
 
 if [ $EXIT_CODE -ne 0 ]; then
     echo "Error: iTerm2 Tabs failed with exit code $EXIT_CODE" >> "$LOG_FILE"
-    osascript -e 'display dialog "iTerm2 Tabs failed to start.\n\nCheck the log file for details:\n~/Library/Logs/iterm2-tabs.log\n\nCommon issues:\n• iTerm2 not running\n• Python API not enabled\n• No tabs open" buttons {"OK"} default button 1 with title "iTerm2 Tabs Error" with icon stop' 2>/dev/null
+    osascript -e 'display dialog "iTerm2 Tabs failed to start.\n\nCheck the log file for details:\n~/Library/Logs/iterm2-tabs.log\n\nCommon issues:\n• iTerm2 not running\n• Python API not enabled\n• No tabs open\n\nLast 10 lines from log:"' 2>/dev/null &
+    sleep 1
+    osascript -e "display dialog \"$(tail -10 \"$LOG_FILE\")\"" 2>/dev/null || true
     exit 1
 fi
 LAUNCHER_EOF
