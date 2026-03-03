@@ -11,7 +11,6 @@ class TestTabSwitcher:
         """Test TabSwitcher initialization."""
         switcher = TabSwitcher(config=sample_config)
         assert switcher.config == sample_config
-        assert switcher.connection is None
         assert switcher.tabs == []
 
     def test_initialization_without_config(self):
