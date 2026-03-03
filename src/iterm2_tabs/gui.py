@@ -1,5 +1,6 @@
 """GUI implementation using Tkinter."""
 
+import contextlib
 import tkinter as tk
 from tkinter import ttk
 from typing import Any, Optional
@@ -264,10 +265,14 @@ class TabSwitcherWindow:
         self.root.deiconify()
         self.root.lift()
         self.root.focus_force()
-        self.root.update()
 
-        # Make window modal (must be done after window is visible)
-        self.root.grab_set()
+        # Process any pending events
+        self.root.update_idletasks()
+
+        # Make window modal if window still exists
+        if self.root.winfo_exists():
+            with contextlib.suppress(Exception):
+                self.root.grab_set()
 
         self.root.mainloop()
 
