@@ -97,18 +97,8 @@ class TabSwitcherWindow:
         list_frame = ttk.Frame(main_frame)
         list_frame.pack(fill=tk.BOTH, expand=True)
 
-        columns = ("title", "path") if self.config.show_path else ("title",)
-        self.tab_list = ttk.Treeview(
-            list_frame, columns=columns, show="tree headings", selectmode="browse"
-        )
-
-        self.tab_list.heading("#0", text="Tab")
-        if self.config.show_path:
-            self.tab_list.heading("path", text="Path")
-
-        self.tab_list.column("#0", width=200)
-        if self.config.show_path:
-            self.tab_list.column("path", width=300)
+        self.tab_list = ttk.Treeview(list_frame, show="tree", selectmode="browse")
+        self.tab_list.column("#0", width=600)
 
         scrollbar = ttk.Scrollbar(list_frame, orient=tk.VERTICAL, command=self.tab_list.yview)
         self.tab_list.configure(yscrollcommand=scrollbar.set)
@@ -191,8 +181,7 @@ class TabSwitcherWindow:
         ]
 
         for tab in filtered_tabs:
-            values = (tab.path,) if self.config.show_path else ()
-            self.tab_list.insert("", "end", text=str(tab), values=values, tags=(tab.tab_id,))
+            self.tab_list.insert("", "end", text=str(tab), tags=(tab.tab_id,))
 
         # Select first item if available
         items = self.tab_list.get_children()
