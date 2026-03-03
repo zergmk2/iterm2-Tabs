@@ -44,7 +44,6 @@ class TabSwitcherWindow:
 
         self.root.geometry(f"{width}x{height}+{x}+{y}")
         self.root.resizable(True, True)
-        self.root.grab_set()  # Make window modal
 
         self._apply_theme()
 
@@ -203,6 +202,15 @@ class TabSwitcherWindow:
 
     def run(self) -> None:
         """Run the main window loop."""
+        # Ensure window is visible and on top
+        self.root.deiconify()
+        self.root.lift()
+        self.root.focus_force()
+        self.root.update()
+
+        # Make window modal (must be done after window is visible)
+        self.root.grab_set()
+
         self.root.mainloop()
 
     def close(self) -> None:
