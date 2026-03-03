@@ -82,7 +82,7 @@ echo "Resources dir: ${RESOURCES_DIR}" >> "$LOG_FILE"
 echo "System Python: /usr/bin/python3" >> "$LOG_FILE"
 
 # Check if iTerm2 is running
-if ! pgrep -x "iTerm2" > /dev/null; then
+if ! ps aux | grep -q "[i]Term2"; then
     echo "ERROR: iTerm2 is not running!" >> "$LOG_FILE"
     osascript -e 'display dialog "iTerm2 is not running!\n\nPlease start iTerm2 first and make sure the Python API is enabled:\n\niTerm2 > Preferences > General > Magic > Enable Python API" buttons {"OK"} default button 1 with title "iTerm2 Tabs" with icon caution' 2>/dev/null
     exit 1
