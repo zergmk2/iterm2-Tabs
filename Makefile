@@ -1,4 +1,4 @@
-.PHONY: help install install-dev test lint format clean run
+.PHONY: help install install-dev test lint format clean run dist
 
 help:  ## Display this help
 	@awk 'BEGIN {FS = ":.*##"; printf "Usage:\n  make <target>\n\nTargets:\n"} /^[a-zA-Z_-]+:.*?##/ { printf "  %-15s %s\n", $$1, $$2 }' $(MAKEFILE_LIST)
@@ -36,5 +36,11 @@ clean:  ## Clean build artifacts
 	rm -rf htmlcov/
 	find . -type d -name __pycache__ -exec rm -rf {} +
 	find . -type f -name '*.pyc' -delete
+	find . -type d -name '*.app' -prune -exec rm -rf {} +
 
 check: lint test  ## Run all checks (lint + test)
+
+dist:  ## Build macOS .app bundle
+	@echo "Building iterm2-tabs.app..."
+	@./scripts/build_app.sh
+	@echo "✓ Built dist/iterm2-tabs.app"
