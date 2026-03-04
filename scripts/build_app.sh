@@ -5,7 +5,7 @@ set -e
 
 # Configuration
 APP_NAME="iterm2-tabs"
-APP_VERSION="0.1.0"
+APP_VERSION="0.1.1"
 APP_DIR="dist/${APP_NAME}.app"
 CONTENTS_DIR="${APP_DIR}/Contents"
 MACOS_DIR="${CONTENTS_DIR}/MacOS"
