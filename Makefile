@@ -41,9 +41,9 @@ clean:  ## Clean build artifacts
 check: lint test  ## Run all checks (lint + test)
 
 dist:  ## Build macOS .app bundle
-	@echo "Building iterm2-tabs.app..."
-	@./scripts/build_app.sh
-	@echo "✓ Built dist/iterm2-tabs.app"
+	@echo "Building iTerm2 Tabs.app..."
+	@./scripts/build_pyinstaller.sh
+	@echo "✓ Built dist/iTerm2 Tabs.app"
 
 bump-version:  ## Bump version number (usage: make bump-version VERSION=0.1.0)
 	@if [ -z "$(VERSION)" ]; then \

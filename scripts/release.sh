@@ -55,13 +55,14 @@ make dist
 # Create release archive
 echo "Creating release archive..."
 cd dist
-zip -r iterm2-tabs.app.zip iterm2-tabs.app
-echo "Archive size: $(stat -f%z iterm2-tabs.app.zip | numfmt --to=iec-i --suffix=B) bytes"
+zip -qr "iTerm2 Tabs.app.zip" "iTerm2 Tabs.app"
+ARCHIVE_SIZE=$(du -h "iTerm2 Tabs.app.zip" | cut -f1)
+echo "Archive size: $ARCHIVE_SIZE"
 
 # Generate checksums
 echo "Generating checksums..."
-shasum -a 256 iterm2-tabs.app.zip > checksums.txt
-shasum -a 512 iterm2-tabs.app.zip >> checksums.txt
+shasum -a 256 "iTerm2 Tabs.app.zip" > checksums.txt
+shasum -a 512 "iTerm2 Tabs.app.zip" >> checksums.txt
 cd ..
 
 # Create release notes
@@ -70,7 +71,7 @@ cat > "$NOTES_FILE" << EOF
 ## iTerm2 Tabs ${VERSION}
 
 ### 下载方式
-- **macOS App**: 下载 \`iterm2-tabs.app.zip\` 并解压到 \`/Applications/\` 目录
+- **macOS App**: 下载 \`iTerm2 Tabs.app.zip\` 并解压到 \`/Applications/\` 目录
 
 ### 使用要求
 1. macOS 10.15+
@@ -80,11 +81,11 @@ cat > "$NOTES_FILE" << EOF
 ### 安装步骤
 \`\`\`bash
 # 1. 下载并解压
-unzip iterm2-tabs.app.zip
+unzip "iTerm2 Tabs.app.zip"
 # 2. 移动到 Applications 目录
-cp -R iterm2-tabs.app /Applications/
+cp -R "iTerm2 Tabs.app" /Applications/
 # 3. 首次运行需要授权
-open /Applications/iterm2-tabs.app
+open "/Applications/iTerm2 Tabs.app"
 \`\`\`
 
 ### 校验和
@@ -108,7 +109,7 @@ EOF
 # Ask for confirmation
 echo -e "${YELLOW}About to create release ${VERSION}${NC}"
 echo "Files to upload:"
-echo "  - dist/iterm2-tabs.app.zip"
+echo "  - dist/iTerm2 Tabs.app.zip"
 echo "  - dist/checksums.txt"
 echo ""
 read -p "Continue? (y/N) " -n 1 -r
@@ -132,7 +133,7 @@ echo "Creating GitHub release..."
 gh release create "$VERSION" \
     --title "iTerm2 Tabs ${VERSION}" \
     --notes-file "$NOTES_FILE" \
-    dist/iterm2-tabs.app.zip \
+    "dist/iTerm2 Tabs.app.zip" \
     dist/checksums.txt
 
 echo -e "${GREEN}Release ${VERSION} created successfully!${NC}"
