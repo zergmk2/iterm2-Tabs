@@ -11,15 +11,19 @@ CONTENTS_DIR="${APP_DIR}/Contents"
 MACOS_DIR="${CONTENTS_DIR}/MacOS"
 RESOURCES_DIR="${CONTENTS_DIR}/Resources"
 
-# Use system Python for the app (works on all macOS systems)
-SYSTEM_PYTHON="/usr/bin/python3"
+# Use uv environment Python for building the app
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SYSTEM_PYTHON="${PROJECT_ROOT}/.venv/bin/python"
 
-# Check if system Python exists
-if [ ! -f "$SYSTEM_PYTHON" ]; then
-    echo "Error: System Python not found at $SYSTEM_PYTHON"
-    echo "Please install Python 3 from python.org or Homebrew"
+# Test if Python is working by printing hello world
+echo "Testing Python at $SYSTEM_PYTHON..."
+if ! $SYSTEM_PYTHON -c "print('hello world')"; then
+    echo "Error: uv Python environment not found at $SYSTEM_PYTHON"
+    echo "Please create uv environment first: uv venv --python 3.12 && uv sync"
     exit 1
 fi
+PYTHON_VERSION=$($SYSTEM_PYTHON --version)
+echo "Python test passed! Version: $PYTHON_VERSION"
 
 # Clean previous build
 rm -rf "${APP_DIR}"
@@ -86,7 +90,7 @@ osascript -e 'tell application "System Events" to set frontmost of first process
 echo "========================================" >> "$LOG_FILE"
 echo "Starting iTerm2 Tabs at $(date)" >> "$LOG_FILE"
 echo "Resources dir: ${RESOURCES_DIR}" >> "$LOG_FILE"
-echo "System Python: /usr/bin/python3" >> "$LOG_FILE"
+echo "Python: Bundled Python 3.12 from uv environment" >> "$LOG_FILE"
 echo "Process ID: $$" >> "$LOG_FILE"
 
 # Check if iTerm2 is running
@@ -98,7 +102,19 @@ fi
 
 # Run and log any errors
 echo "About to start Python app..." >> "$LOG_FILE"
-/usr/bin/python3 -u -m iterm2_tabs 2>&1 | while IFS= read -r line; do
+
+# Try to find Python 3.12, fallback to python3, then python
+PYTHON_CMD=""
+if command -v python3.12 &> /dev/null; then
+    PYTHON_CMD="python3.12"
+elif command -v python3 &> /dev/null; then
+    PYTHON_CMD="python3"
+else
+    PYTHON_CMD="python"
+fi
+
+echo "Using Python command: $PYTHON_CMD" >> "$LOG_FILE"
+$PYTHON_CMD -u -m iterm2_tabs 2>&1 | while IFS= read -r line; do
     echo "$line" >> "$LOG_FILE"
     echo "$line"  # Also output to console for debugging
 done
@@ -125,8 +141,26 @@ mkdir -p "${RESOURCES_DIR}/site-packages"
 rsync -av --exclude='__pycache__' --exclude='*.pyc' \
     src/iterm2_tabs/ "${RESOURCES_DIR}/site-packages/iterm2_tabs/"
 
-# Install dependencies to Resources using system Python
-$SYSTEM_PYTHON -m pip install --target="${RESOURCES_DIR}/site-packages" --no-cache --upgrade iterm2 2>&1 | grep -v "already satisfied" || true
+# Install dependencies to Resources using uv pip
+# Use latest versions compatible with Python 3.12
+echo "Installing dependencies for Python 3.12..."
+# Check if uv is available
+if command -v uv &> /dev/null; then
+    # Use uv pip for faster installation
+    uv pip install --target "${RESOURCES_DIR}/site-packages" --no-cache \
+        "iterm2>=2.13" \
+        "websockets>=13.0" \
+        "protobuf>=3.20" \
+        2>&1 | grep -v "already satisfied" || true
+else
+    # Fallback to regular pip
+    echo "uv not found, using pip..."
+    pip3 install --target="${RESOURCES_DIR}/site-packages" --no-cache \
+        "iterm2>=2.13" \
+        "websockets>=13.0" \
+        "protobuf>=3.20" \
+        2>&1 | grep -v "already satisfied" || true
+fi
 
 # Create __init__.py for site-packages
 touch "${RESOURCES_DIR}/site-packages/__init__.py"
@@ -143,4 +177,3 @@ echo "⚠️  IMPORTANT:"
 echo "    1. Make sure iTerm2 is running"
 echo "    2. Enable Python API: iTerm2 > Preferences > General > Magic > Enable Python API"
 echo "    3. Log file: ~/Library/Logs/iterm2-tabs.log"
-EOF

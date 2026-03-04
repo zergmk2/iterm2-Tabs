@@ -1,0 +1,117 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (e.g., v0.1.0)'
+        required: true
+        default: 'v0.1.0'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Set up Python 3.12 with uv
+        run: |
+          uv venv --python 3.12
+          source .venv/bin/activate
+          python --version
+
+      - name: Install dependencies
+        run: |
+          source .venv/bin/activate
+          uv sync
+
+      - name: Build .app
+        run: |
+          source .venv/bin/activate
+          make dist
+
+      - name: Create release archive
+        run: |
+          cd dist
+          zip -r iterm2-tabs.app.zip iterm2-tabs.app
+          echo "APP_SIZE=$(stat -f%z iterm2-tabs.app.zip)" >> $GITHUB_ENV
+
+      - name: Generate checksums
+        run: |
+          cd dist
+          shasum -a 256 iterm2-tabs.app.zip > checksums.txt
+          shasum -a 512 iterm2-tabs.app.zip >> checksums.txt
+
+      - name: Get version
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "RELEASE_VERSION=${VERSION}" >> $GITHUB_ENV
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_VERSION }}
+          name: iTerm2 Tabs ${{ env.RELEASE_VERSION }}
+          body: |
+            ## iTerm2 Tabs ${{ env.RELEASE_VERSION }}
+
+            ### 下载方式
+            - **macOS App**: 下载 `iterm2-tabs.app.zip` 并解压到 `/Applications/` 目录
+
+            ### 使用要求
+            1. macOS 10.15+
+            2. iTerm2 正在运行
+            3. 已启用 iTerm2 Python API：`iTerm2 > Preferences > General > Magic > Enable Python API`
+
+            ### 安装步骤
+            ```bash
+            # 1. 下载并解压
+            unzip iterm2-tabs.app.zip
+            # 2. 移动到 Applications 目录
+            cp -R iterm2-tabs.app /Applications/
+            # 3. 首次运行需要授权
+            open /Applications/iterm2-tabs.app
+            ```
+
+            ### 校验和
+            请使用以下命令校验下载文件的完整性：
+            ```bash
+            shasum -a 256 -c checksums.txt
+            shasum -a 512 -c checksums.txt
+            ```
+
+            ### 更新日志
+            查看 [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) 了解详细更新内容。
+          files: |
+            dist/iterm2-tabs.app.zip
+            dist/checksums.txt
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: iterm2-tabs-app
+          path: dist/iterm2-tabs.app.zip
+          retention-days: 30

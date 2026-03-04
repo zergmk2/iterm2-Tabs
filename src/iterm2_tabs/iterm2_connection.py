@@ -29,12 +29,10 @@ class ITerm2Connection:
             List of tab information dictionaries
         """
         tabs_info = []
-        logger.info(f"Getting tabs from {len(self.app.windows)} window(s)")
+        logger.debug(f"Getting tabs from {len(self.app.windows)} window(s)")
 
         for window_idx, window in enumerate(self.app.windows, start=1):
-            logger.info(f"Window {window_idx}: {len(window.tabs)} tab(s)")
             for tab in window.tabs:
-                logger.info(f"  Tab {tab.tab_id}: {len(tab.sessions)} session(s)")
                 for session in tab.sessions:
                     title = await session.async_get_variable("name")
                     path = await self._get_session_path(session)
@@ -47,10 +45,9 @@ class ITerm2Connection:
                         "path": path,
                         "window_number": window_idx,
                     }
-                    logger.info(f"    Found tab: {title}")
                     tabs_info.append(tab_info)
 
-        logger.info(f"Total tabs collected: {len(tabs_info)}")
+        logger.debug(f"Total tabs collected: {len(tabs_info)}")
         return tabs_info
 
     async def _get_session_path(self, session: iterm2.Session) -> Optional[str]:

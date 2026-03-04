@@ -22,7 +22,6 @@ class TabSwitcherWindow:
             config: Application configuration
             on_select: Callback function when a tab is selected
         """
-        logger.info(f"Initializing TabSwitcherWindow with {len(tabs)} tabs")
         self.tabs = tabs
         self.config = config
         self.on_select = on_select
@@ -33,7 +32,6 @@ class TabSwitcherWindow:
         self._setup_widgets()
         self._bind_events()
         self._update_list()
-        logger.info("TabSwitcherWindow initialization complete")
 
     def _setup_window(self) -> None:
         """Set up the main window properties."""
@@ -57,16 +55,16 @@ class TabSwitcherWindow:
     def _apply_theme(self) -> None:
         """Apply the configured theme to the window."""
         if self.config.theme == "dark":
-            # Modern dark theme with better colors
+            # Dark theme with HIGH CONTRAST colors
             bg = "#2b2b2b"
-            fg = "#e0e0e0"
+            fg = "#ffffff"  # Pure white for maximum contrast
             select_bg = "#007acc"
             select_fg = "#ffffff"
             focus_color = "#005a9e"
         else:
-            # Modern light theme
-            bg = "#f5f5f5"
-            fg = "#333333"
+            # Light theme with HIGH CONTRAST colors
+            bg = "#ffffff"
+            fg = "#000000"  # Pure black for maximum contrast
             select_bg = "#007acc"
             select_fg = "#ffffff"
             focus_color = "#005a9e"
@@ -77,20 +75,18 @@ class TabSwitcherWindow:
         # Configure frame with background color
         style.configure("TFrame", background=bg, borderwidth=0)
 
-        # Configure labels with modern font
+        # Configure labels with high contrast
         style.configure(
             "TLabel",
             background=bg,
             foreground=fg,
-            font=("SF Pro Display", self.config.font_size)
-            if self.config.theme == "dark"
-            else ("SF Pro Text", self.config.font_size),
+            font=("TkDefaultFont", self.config.font_size),
         )
 
-        # Configure entry with modern styling
+        # Configure entry with high contrast
         style.configure(
             "TEntry",
-            fieldbackground="#3c3c3c" if self.config.theme == "dark" else "#ffffff",
+            fieldbackground=bg,
             foreground=fg,
             borderwidth=1,
             relief="solid",
@@ -98,20 +94,19 @@ class TabSwitcherWindow:
         )
         style.map("TEntry", bordercolor=[("focus", focus_color)])
 
-        # Configure Treeview with modern styling
+        # Configure Treeview with HIGH CONTRAST for visibility
         style.configure(
             "Treeview",
-            background="#3c3c3c" if self.config.theme == "dark" else "#ffffff",
+            background=bg,
             foreground=fg,
-            fieldbackground="#3c3c3c" if self.config.theme == "dark" else "#ffffff",
-            borderwidth=0,
-            font=("SF Pro Display", self.config.font_size)
-            if self.config.theme == "dark"
-            else ("SF Pro Text", self.config.font_size),
+            fieldbackground=bg,
+            borderwidth=1,
+            relief="solid",
+            font=("TkDefaultFont", self.config.font_size),
             rowheight=28,
         )
 
-        # Configure selection colors
+        # Configure selection colors with high contrast
         style.map(
             "Treeview",
             background=[("selected", select_bg)],
@@ -141,9 +136,7 @@ class TabSwitcherWindow:
         title_label = ttk.Label(
             main_frame,
             text="iTerm2 Tabs",
-            font=("SF Pro Display", 16, "bold")
-            if self.config.theme == "dark"
-            else ("SF Pro Text", 16, "bold"),
+            font=("TkDefaultFont", 16, "bold"),
         )
         title_label.pack(pady=(0, 12))
 
@@ -156,7 +149,7 @@ class TabSwitcherWindow:
 
         self.search_entry = ttk.Entry(
             search_frame,
-            font=("SF Pro Display", 13) if self.config.theme == "dark" else ("SF Pro Text", 13),
+            font=("TkDefaultFont", 13),
         )
         self.search_entry.pack(fill=tk.X, expand=True)
 
@@ -165,7 +158,9 @@ class TabSwitcherWindow:
         list_frame.pack(fill=tk.BOTH, expand=True)
 
         self.tab_list = ttk.Treeview(list_frame, show="tree", selectmode="browse")
-        self.tab_list.column("#0", width=600)
+        # CRITICAL: For show="tree", all content is in column #0
+        # Set both minimum width AND stretch to ensure it's visible
+        self.tab_list.column("#0", minwidth=500, width=600, stretch=True)
 
         scrollbar = ttk.Scrollbar(
             list_frame, orient=tk.VERTICAL, style="Vertical.TScrollbar", command=self.tab_list.yview
@@ -180,7 +175,7 @@ class TabSwitcherWindow:
         instructions_label = ttk.Label(
             main_frame,
             text=instructions,
-            font=("SF Pro Display", 10) if self.config.theme == "dark" else ("SF Pro Text", 10),
+            font=("TkDefaultFont", 10),
             foreground="#888888" if self.config.theme == "dark" else "#666666",
         )
         instructions_label.pack(pady=(12, 0))
@@ -245,7 +240,6 @@ class TabSwitcherWindow:
 
     def _update_list(self) -> None:
         """Update the tab list based on current filter."""
-        logger.info(f"Updating tab list with {len(self.tabs)} tabs, filter='{self.filter_text}'")
         self.tab_list.delete(*self.tab_list.get_children())
 
         filtered_tabs = [
@@ -256,19 +250,18 @@ class TabSwitcherWindow:
             or (tab.path and self.filter_text in tab.path.lower())
         ]
 
-        logger.info(f"Filtered to {len(filtered_tabs)} tabs")
         for tab in filtered_tabs:
             self.tab_list.insert("", "end", text=str(tab), tags=(tab.tab_id,))
-            logger.debug(f"  Added: {tab.title}")
 
         # Select first item if available
         items = self.tab_list.get_children()
         if items:
             self.selected_index = 0
             self.tab_list.selection_set(items[0])
-            logger.info(f"Selected first tab: {self.tabs[0].title}")
-        else:
-            logger.warning("No items to display in tab list")
+            self.tab_list.see(items[0])  # Ensure first item is visible
+
+        # Force a refresh to ensure items are visible
+        self.tab_list.update_idletasks()
 
     def run(self) -> None:
         """Run the main window loop."""
@@ -277,13 +270,18 @@ class TabSwitcherWindow:
         self.root.lift()
         self.root.attributes("-topmost", True)  # Bring to front
         self.root.focus_force()
-        self.root.update_idletasks()
+
+        # Safe update with check
+        if self.root.winfo_exists():
+            try:
+                self.root.update_idletasks()
+            except Exception:
+                pass
+
+        # Remove topmost after 100ms
         self.root.after(
             100, lambda: self.root.attributes("-topmost", False)
-        )  # Remove topmost after 100ms
-
-        # Process any pending events
-        self.root.update_idletasks()
+        )
 
         # Make window modal if window still exists
         if self.root.winfo_exists():
@@ -294,7 +292,10 @@ class TabSwitcherWindow:
         with contextlib.suppress(Exception):
             self.root.tk.call("::tk::mac::BringToFront", self.root._w)
 
-        self.root.mainloop()
+        try:
+            self.root.mainloop()
+        except Exception as e:
+            logger.error(f"Error in mainloop: {e}")
 
     def close(self) -> None:
         """Close the window."""
