@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-03-05
+
+### Changed
+- 🔧 Migrated build system to PyInstaller
+- 📉 Reduced app size from 50MB+ to 28MB
+- 🚀 Improved build process and dependency management
+- 📦 Standardized macOS app bundle structure
+
+## [0.1.1] - 2026-03-05
+
+### Fixed
+- 🐛 Fixed Python 3.9 compatibility issue with websockets library
+- 📦 Downgraded websockets to 12.x for better system Python support
+
+## [0.1.0] - 2026-03-04
+
 ### Added
 - Initial release with iTerm2 tab switching functionality
 - Modern GUI with dark/light theme support
@@ -27,13 +43,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Built with Python 3.12 and iTerm2 Python API
 - Uses uv for fast dependency management
 - Tkinter-based GUI with custom styling
-- GitHub Actions for automated releases
-
-## [0.1.0] - 2025-03-04
-
-### Added
-- Initial release
-- Basic tab switching functionality
-- GUI interface with tab list
-- Keyboard and mouse navigation
-- Theme configuration

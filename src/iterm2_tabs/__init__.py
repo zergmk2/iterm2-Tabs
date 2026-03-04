@@ -1,6 +1,6 @@
 """iTerm2-Tabs: A popup window for iTerm2 tab switching."""
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 
 from iterm2_tabs.app import TabSwitcher, focus_tab
 from iterm2_tabs.config import Config
