@@ -22,6 +22,12 @@ English | [简体中文](README.md)
 
 ## 📸 Preview
 
+### Demo
+
+![Demo GIF](docs/images/demo.gif)
+
+### Interface Schematic
+
 ```
 ┌─────────────────────────────────────────┐
 │              iTerm2 Tabs                 │
