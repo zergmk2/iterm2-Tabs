@@ -142,22 +142,23 @@ rsync -av --exclude='__pycache__' --exclude='*.pyc' \
     src/iterm2_tabs/ "${RESOURCES_DIR}/site-packages/iterm2_tabs/"
 
 # Install dependencies to Resources using uv pip
-# Use latest versions compatible with Python 3.12
-echo "Installing dependencies for Python 3.12..."
+# Use versions compatible with Python 3.9+ (for system Python compatibility)
+echo "Installing dependencies for Python 3.9+ compatibility..."
 # Check if uv is available
 if command -v uv &> /dev/null; then
     # Use uv pip for faster installation
+    # websockets 12.x is the last version supporting Python 3.9
     uv pip install --target "${RESOURCES_DIR}/site-packages" --no-cache \
-        "iterm2>=2.13" \
-        "websockets>=13.0" \
+        "iterm2>=2.6" \
+        "websockets>=12.0,<13.0" \
         "protobuf>=3.20" \
         2>&1 | grep -v "already satisfied" || true
 else
     # Fallback to regular pip
     echo "uv not found, using pip..."
     pip3 install --target="${RESOURCES_DIR}/site-packages" --no-cache \
-        "iterm2>=2.13" \
-        "websockets>=13.0" \
+        "iterm2>=2.6" \
+        "websockets>=12.0,<13.0" \
         "protobuf>=3.20" \
         2>&1 | grep -v "already satisfied" || true
 fi
