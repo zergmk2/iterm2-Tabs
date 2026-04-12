@@ -38,7 +38,7 @@ dev = [
     "black>=23.7",
     "ruff>=0.0.280",
     "mypy>=1.5",
-    "pre-commit>=3.3",
+    "pre-commit>=4.3.0",
 ]
 test = [
     "pytest>=7.4",
