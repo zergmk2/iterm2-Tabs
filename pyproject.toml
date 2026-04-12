@@ -27,7 +27,7 @@ classifiers = [
     "Operating System :: MacOS",
 ]
 dependencies = [
-    "iterm2>=2.6",
+    "iterm2>=2.14",
 ]
 
 [project.optional-dependencies]
